@@ -18,7 +18,7 @@ paths = [
     "ext/"
 ]
 
-MAXIMUM_INACTIVITY_SECONDS = 1 # 129600 # 36 hours in seconds
+MAXIMUM_INACTIVITY_SECONDS = 129600 # 36 hours in seconds
 
 class TSHelper(commands.Bot):
     def __init__(self):
@@ -38,7 +38,7 @@ class TSHelper(commands.Bot):
         await thread.send(embed=closed_embed)
         await thread.edit(name=f"🔒 {thread.name}", archived=True, locked=True)
 
-    @tasks.loop(minutes=2)
+    @tasks.loop(minutes=15)
     async def thread_archiver(self):
         THREADS = Thread().get()
         threads = Thread().get()
