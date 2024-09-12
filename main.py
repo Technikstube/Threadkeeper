@@ -3,12 +3,15 @@ import os
 import sys
 import asyncio
 import signal
+import sentry_sdk
 import random
 from dotenv import get_key
 from datetime import datetime
 from discord.ext import commands, tasks
 
 from utility import Thread, Config
+
+sentry_sdk.init("http://41ecd602be0846c685d9fad7d624a58f@192.168.2.99:8000/2")
 
 intents = discord.Intents.default()
 intents.members = True
