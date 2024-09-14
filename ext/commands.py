@@ -1,20 +1,62 @@
 import discord
+import asyncio
 from typing import Optional
 from discord.ext import commands
 from discord import app_commands
 
-from utility import Config
+from utility import Config, Thread
 
 class Commands(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot: commands.Bot = bot
 
+    async def close_thread(self, thread: discord.Thread):
+        closed_embed = discord.Embed(
+                title="",
+                description="Dieser Thread ist nun geschlossen. Sollte deine Frage / dein Problem weiterhin bestehen kannst du gerne einen neuen Thread erstellen!",
+                color=discord.Color.orange()
+            )
+        closed_embed.set_author(name="Hilfe-Thread geschlossen", icon_url=self.bot.user.avatar.url)
+        await thread.send(embed=closed_embed)
+        await thread.edit(name=f"🔒 {thread.name}", archived=True, locked=True)
+
     @commands.hybrid_command(name="close", with_app_command=True, description="Close a Help-Thread")
     @commands.guild_only()
     async def close_command(self, ctx: commands.Context, reason: Optional[str]):
-        return
-        await ctx.send("Dieser Kanal ist kein Hilfe-Thread.", delete_after=3, ephemeral=True)
+        threads = Thread().get()
+        conf = Config().get()
+        forum = None
+        target = None
+        
+        if "help_channel" in conf:
+            forum: discord.ForumChannel = self.bot.get_channel(int(conf["help_channel"]))
+        
+        for _thread in forum.threads:
+            if _thread.id == ctx.channel.id:
+                target: discord.Thread = _thread
+                break
+        
+        if target is None:
+            await ctx.send("Dieser Kanal ist kein Hilfe-Thread.", delete_after=3, ephemeral=True)
+            return
+        if str(target.id) not in threads:
+            await ctx.send("Dieser Thread ist kein Hilfe-Thread.", delete_after=3, ephemeral=True)
+            return
+        if target.locked:
+            threads.pop(str(target.id))
+            Thread().save(threads)
+            await ctx.send("Dieser Hilfe-Thread ist bereits geschlossen.", delete_after=3, ephemeral=True)
+            return
+        if target.flags.pinned:
+            threads.pop(str(target.id))
+            Thread().save(threads)
+            await ctx.send("Dieser Thread ist angepinnt.", delete_after=3, ephemeral=True)
+            return
     
+        await self.close_thread(target)
+        threads.pop(str(target.id))
+        Thread().save(threads)
+        
     @app_commands.command(name="set_help_channel", description="Set the Help-Channel")
     @commands.guild_only()
     @app_commands.default_permissions(manage_guild=True)
