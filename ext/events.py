@@ -7,6 +7,7 @@ from utility import Config, Thread
 new_thread_description = """
 - **Stelle deine Frage**.
 - **Erkläre was passiert ist**, was hast du davor gemacht? (Kürzlich Einstellungen geändert, Programme installiert?, usw.)
+-# <:info:1226139199351296051> Schließt sich automatisch nach Inaktivität oder mit !close
 """
 
 class Events(commands.Cog):
@@ -38,9 +39,7 @@ class Events(commands.Cog):
                 description=new_thread_description,
                 color=discord.Color.brand_green()
             )
-            new_thread_embed.set_author(name="Neuer Hilfe-Thread geöffnet", icon_url=self.bot.user.avatar.url)
-            new_thread_embed.set_footer(text="Schließt sich automatisch nach Inaktivität oder mit !close")
-            
+            new_thread_embed.set_author(name="Hilfe-Thread geöffnet", icon_url=thread.owner.avatar.url if thread.owner.avatar.url is not None else thread.owner.default_avatar.url)            
             await thread.send(thread.owner.mention, embed=new_thread_embed)
 
     @commands.Cog.listener(name="on_message")

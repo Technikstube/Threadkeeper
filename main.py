@@ -50,12 +50,16 @@ class TSHelper(commands.Bot):
         
         for _thread in THREADS:
             dist = round(datetime.now().timestamp()) - round(THREADS[str(_thread)]["last_activity"])
+            
             if dist >= MAXIMUM_INACTIVITY_SECONDS:
                 thread: discord.Thread = self.get_channel(int(_thread))
+                
                 if thread.flags.pinned:
+                    print(f"Thread-Archiver: skipping pinned thread ({_thread.id})")
                     threads.pop(_thread)
                     Thread().save(threads)
                     continue
+                
                 await self.close_thread(thread)
                 threads.pop(_thread)
                 Thread().save(threads)
@@ -69,41 +73,48 @@ class TSHelper(commands.Bot):
         if "help_channel" in conf:
             forum: discord.ForumChannel = self.get_channel(int(conf["help_channel"]))
         
-        if forum is not None:
-            for _thread in forum.threads:
-                last_message = None
-                await asyncio.sleep(0.2)
-                if str(_thread.id) in threads:
-                    continue
-                if _thread.locked:
-                    continue
-                if _thread.flags.pinned:
-                    continue
-                
-                try:
-                    if await _thread.fetch_message(_thread.starter_message.id) is not None:
-                        message: discord.Message = await _thread.fetch_message(_thread.id)
-                        last_message = message.created_at.timestamp()
-                except:
-                    pass
-                try:
-                    if await _thread.fetch_message(_thread.last_message_id) is not None:
-                        message: discord.Message = await _thread.fetch_message(_thread.last_message_id)
-                        last_message = message.created_at.timestamp()
-                except:
-                    pass
-                if last_message is None:
-                    print("none")
-                    await self.close_thread(_thread)
-                    continue
-                dist = round(datetime.now().timestamp()) - round(last_message)
-                if dist >= MAXIMUM_INACTIVITY_SECONDS:
-                    await self.close_thread(_thread)
-                    continue
-                threads[str(_thread.id)] = {
-                "last_activity": last_message
-                }
-                Thread().save(threads)
+        if forum is None:
+            print("Thread-Scanner: no forum channel set, skipping forum scan")
+            return
+    
+        for _thread in forum.threads:
+            last_message = None
+            await asyncio.sleep(0.2)
+            
+            if str(_thread.id) in threads:
+                continue
+            if _thread.locked:
+                continue
+            if _thread.flags.pinned:
+                continue
+            
+            try:
+                if await _thread.fetch_message(_thread.starter_message.id) is not None:
+                    message: discord.Message = await _thread.fetch_message(_thread.id)
+                    last_message = message.created_at.timestamp()
+            except discord.NotFound | discord.HTTPException | discord.Forbidden:
+                pass
+            try:
+                if await _thread.fetch_message(_thread.last_message_id) is not None:
+                    message: discord.Message = await _thread.fetch_message(_thread.last_message_id)
+                    last_message = message.created_at.timestamp()
+            except discord.NotFound | discord.HTTPException | discord.Forbidden:
+                pass
+            
+            if last_message is None:
+                print(f"I didnt find any message for thread {_thread.id}. Closing Thread...")
+                await self.close_thread(_thread)
+                continue
+            
+            dist = round(datetime.now().timestamp()) - round(last_message)
+            if dist >= MAXIMUM_INACTIVITY_SECONDS:
+                await self.close_thread(_thread)
+                continue
+            
+            threads[str(_thread.id)] = {
+            "last_activity": last_message
+            }
+            Thread().save(threads)
                 
         
     @tasks.loop(minutes=60.1)

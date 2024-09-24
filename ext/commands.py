@@ -1,5 +1,4 @@
 import discord
-import asyncio
 from typing import Optional
 from discord.ext import commands
 from discord import app_commands
@@ -31,23 +30,27 @@ class Commands(commands.Cog):
         if "help_channel" in conf:
             forum: discord.ForumChannel = self.bot.get_channel(int(conf["help_channel"]))
         
+        if forum is None:
+            await ctx.send("Ich habe kein Hilfeforum gefunden. (`/set_help_channel`)", delete_after=5, ephemeral=True)
+            return
+        
         for _thread in forum.threads:
             if _thread.id == ctx.channel.id:
                 target: discord.Thread = _thread
                 break
-        
+    
         if target is None:
             await ctx.send("Dieser Kanal ist kein Hilfe-Thread.", delete_after=3, ephemeral=True)
             return
-        if str(target.id) not in threads:
+        elif str(target.id) not in threads:
             await ctx.send("Dieser Thread ist kein Hilfe-Thread.", delete_after=3, ephemeral=True)
             return
-        if target.locked:
+        elif target.locked:
             threads.pop(str(target.id))
             Thread().save(threads)
-            await ctx.send("Dieser Hilfe-Thread ist bereits geschlossen.", delete_after=3, ephemeral=True)
+            await ctx.send("Dieser Thread ist kein Hilfe-Thread.", delete_after=3, ephemeral=True)
             return
-        if target.flags.pinned:
+        elif target.flags.pinned:
             threads.pop(str(target.id))
             Thread().save(threads)
             await ctx.send("Dieser Thread ist angepinnt.", delete_after=3, ephemeral=True)
@@ -66,12 +69,12 @@ class Commands(commands.Cog):
         _chn = self.bot.get_channel(int(channel.id))
         
         if not isinstance(_chn, discord.ForumChannel):
-            await interaction.response.send_message("Das ist keine Forum-Kanal.", ephemeral=True)
+            await interaction.response.send_message("Ungültiger Kanaltyp. (Nur Forumkanäle)", ephemeral=True)
         
         conf["help_channel"] = channel.id
         Config().save(conf)
         
-        await interaction.response.send_message(f"Help-Channel zu `{_chn.name}` gesetzt.", ephemeral=True)
+        await interaction.response.send_message(f"Hilfekanal gesetzt. ({_chn.mention})", ephemeral=True)
     
 async def setup(bot):
     await bot.add_cog(Commands(bot))
