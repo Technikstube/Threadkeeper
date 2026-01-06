@@ -95,7 +95,7 @@ class TSHelper(commands.Bot):
                 continue
             
             try:
-                if await _thread.fetch_message(_thread.starter_message.id) is not None:
+                if await _thread.fetch_message(_thread.id) is not None:
                     message: discord.Message = await _thread.fetch_message(_thread.id)
                     last_message = message.created_at.timestamp()
             except discord.NotFound | discord.HTTPException | discord.Forbidden:
