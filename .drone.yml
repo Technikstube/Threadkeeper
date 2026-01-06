@@ -23,7 +23,7 @@ steps:
   environment:
     DOCKER_HOST: tcp://192.168.2.10:2375
   commands:
-  - docker build -t "tshelper:latest" .
+  - docker build -t "tshelper:latest" ./Threadkeeper
   - docker tag tshelper:latest 192.168.2.10:5000/tshelper:latest
   - docker push 192.168.2.10:5000/tshelper:latest
   when:
