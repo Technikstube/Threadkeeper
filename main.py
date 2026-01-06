@@ -53,6 +53,12 @@ class TSHelper(commands.Bot):
             
             if dist >= MAXIMUM_INACTIVITY_SECONDS:
                 thread: discord.Thread = self.get_channel(int(_thread))
+
+                if thread is None:
+                    print(f"Thread-Archiver: skipping thread that is none.")
+                    threads.pop(_thread)
+                    Thread().save(threads)
+                    continue
                 
                 if thread.flags.pinned:
                     print(f"Thread-Archiver: skipping pinned thread ({_thread.id})")
@@ -80,7 +86,7 @@ class TSHelper(commands.Bot):
         for _thread in forum.threads:
             last_message = None
             await asyncio.sleep(0.2)
-            
+
             if str(_thread.id) in threads:
                 continue
             if _thread.locked:
